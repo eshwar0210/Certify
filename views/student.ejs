@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Student Certificates</title>
+    <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/profile/css/style.css" />
+    <link rel="stylesheet" href="/profile/css/styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/js/bootstrap.bundle.min.js"></script>
+  </head>
+  <body>
+    <!-- ======= Header ======= -->
+    <div class="container" style="margin-top: 5%">
+      <!-- Profile Section -->
+      <div class="main-body">
+        <div class="row gutters-sm" style="justify-content: center">
+          <div class="col-md-5 mb-3">
+            <div class="card">
+              <div class="card-body">
+                <div class="d-flex flex-column align-items-center text-center" style="margin: 4% auto">
+                  <img
+                    src="https://bootdey.com/img/Content/avatar/avatar7.png"
+                    alt="Admin"
+                    class="rounded-circle"
+                    width="150"
+                  />
+                  <div class="mt-3">
+                    <h4><%= studentName %></h4>
+                    <p class="text-secondary mb-1">Address</p>
+                    <p class="text-secondary mb-1"><%= id %></p>
+                    <p class="text-secondary mb-1">Certificates: <%= certificates.length %></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Certificates Section -->
+        <div class="row">
+          <div class="col-4 btn-group btn-group-toggle" data-toggle="buttons">
+            <label class="btn btn-secondary">
+              <input
+                onclick="updatedisplay(event,'certificates')"
+                type="radio"
+                name="options"
+                id="option3"
+                autocomplete="off"
+              /> Certificates
+            </label>
+          </div>
+        </div>
+
+        <div class="row gutters-sm">
+          <div class="col-12">
+            <div class="card h-100">
+              <div class="card-body">
+                <div id="certificates" class="blog" style="padding-top: 2%">
+                  <% certificates.forEach(function(cert) { %>
+                    <div class="row mb-3">
+                      <div class="col-6">
+                        <strong>Certificate Address:</strong> <%= cert.certad %>
+                        <br />
+                        <sub><%= cert.inst %></sub>
+                      </div>
+                      <div class="col-3 text-center">
+                        <strong>Course:</strong> <%= cert.course %>
+                      </div>
+                      <div class="col-3 text-right">
+                        <a href="/viewcertificate/<%= cert.certad %>" class="btn btn-primary">View</a>
+                      </div>
+                    </div>
+                    <hr />
+                  <% }) %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      allblog = document.getElementsByClassName("blog");
+      for (i = 0; i < allblog.length; i++) allblog[i].style.display = "none";
+      document.getElementById("certificates").style.display = "block";
+
+      function updatedisplay(evt, curr) {
+        allblog = document.getElementsByClassName("blog");
+        for (i = 0; i < allblog.length; i++) allblog[i].style.display = "none";
+        document.getElementById(curr).style.display = "block";
+        $(evt.target).addClass("active");
+      }
+    </script>
+  </body>
+</html>

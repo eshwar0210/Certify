@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Certificate of Completion</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="images/icons/favicon.ico" />
+    <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="fonts/font-awesome-4.7.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" type="text/css" href="fonts/Linearicons-Free-v1.0.0/icon-font.min.css" />
+    <link rel="stylesheet" type="text/css" href="vendor/animate/animate.css" />
+    <link rel="stylesheet" type="text/css" href="vendor/css-hamburgers/hamburgers.min.css" />
+    <link rel="stylesheet" type="text/css" href="vendor/animsition/css/animsition.min.css" />
+    <link rel="stylesheet" type="text/css" href="vendor/select2/select2.min.css" />
+    <link rel="stylesheet" type="text/css" href="vendor/daterangepicker/daterangepicker.css" />
+    <link rel="stylesheet" type="text/css" href="css/util.css" />
+    <link rel="stylesheet" type="text/css" href="css/main.css" />
+    <meta name="robots" content="noindex, follow" />
+    <style>
+      .address {
+        position: absolute;
+        bottom: 10px;
+        right: 20px;
+        font-size: 18px;
+        font-weight: normal;
+      }
+
+      /* Hide the print button when printing */
+      @media print {
+        .print-btn {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" style="display: flex; justify-content: center; margin-top: 3%">
+      <div style="width: 800px; height: 600px; padding: 20px; text-align: center; border: 10px solid #787878;">
+        <div style="width: 750px; height: 550px; padding: 20px; text-align: center; border: 5px solid #787878; position: relative;">
+          <span style="font-size: 50px; font-weight: bold">Certificate of Completion</span>
+          <br /><br />
+          <span style="font-size: 25px"><i>This is to certify that</i></span>
+          <br /><br />
+          <!-- Dynamic Student Name -->
+          <span style="font-size: 30px"><b><%= name %></b></span><br /><br />
+          <span style="font-size: 25px"><i>has completed the course</i></span>
+          <br /><br />
+          <!-- Dynamic Course Name -->
+          <span style="font-size: 30px"><%= course %></span><br /><br />
+          <span style="font-size: 20px">Institute: <%= institute %></span>
+          <br /><br /><br /><br />
+          <span style="font-size: 25px"><i>Duration</i></span><br />
+          <!-- Dynamic Duration -->
+          <span style="font-size: 30px"><%= duration %> months</span>
+          
+          <!-- Address at the top right corner -->
+          <div class="address">
+            <strong>Certificate Id:</strong> <%= address %>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Print button -->
+    <div style="margin-left: 10%;">
+      <button class="print-btn" onclick="window.print()">Print Certificate</button>
+    </div>
+
+    <script src="vendor/jquery/jquery-3.2.1.min.js"></script>
+    <script src="vendor/animsition/js/animsition.min.js"></script>
+    <script src="vendor/bootstrap/js/popper.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
+    <script src="vendor/select2/select2.min.js"></script>
+    <script src="vendor/daterangepicker/moment.min.js"></script>
+    <script src="vendor/daterangepicker/daterangepicker.js"></script>
+    <script src="vendor/countdowntime/countdowntime.js"></script>
+    <script src="js/main.js"></script>
+  </body>
+</html>

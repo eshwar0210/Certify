@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - Certificate</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f8d7da;
+            color: #721c24;
+            text-align: center;
+            padding: 50px;
+        }
+        .error-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: #f9f9f9;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+        }
+        .error-container h1 {
+            font-size: 2.5em;
+        }
+        .error-container p {
+            font-size: 1.2em;
+        }
+        .error-container a {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #721c24;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .error-container a:hover {
+            background-color: #5a1e1e;
+        }
+    </style>
+</head>
+<body>
+
+<div class="error-container">
+    <h1>Error!</h1>
+    <p><%= error %></p>
+    <a href="/">Go Back to Homepage</a>
+</div>
+
+</body>
+</html>
