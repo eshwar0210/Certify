@@ -25,7 +25,7 @@ A Digital Certificate using blockchain technology can address this problem.
 Here is a run through of how to set up the application:
 
 * Step 1 : Download the code folder or clone from 
-  * **`https://github.com/Mridul20/Certify.git`** 
+  * **`https://github.com/eshwar0210/Certify.git`** 
 * Step 2 : Run  **`npm install`** at the root
 * Step 3 : Create a test blockchain network on ganache
 * Step 4 : Run  **`truffle compile`** and  **`truffle migrate --reset`** at the root folder
