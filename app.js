@@ -323,7 +323,7 @@ async function sendTransaction(studentAccountHash, name, add, res) {
         maxFeePerGas: gasPrice
       });
 
-    res.render("institute", { id: add });
+    res.render("succesPage", { instituteadd : add ,message: "Account creation successful!", address: studentAccountHash });
   } catch (err) {
     console.error("An error occurred:", err);
     res.status(500).send("An error occurred while adding the student.");
@@ -409,7 +409,7 @@ app.post("/gencertificate", async function (req, res) {
       .send({ from: adminAccount, gasPrice: adjustedGasPrice, gas: 6721975 });
 
     console.log("Transaction successful:", receipt);
-    res.render("institute", { id: institutead });
+    res.render("succesPage2", { instituteadd : institutead ,message: "Certificate creation successful!", address: account });
   } catch (err) {
     console.error("Error:", err.message);
     res.status(500).send("An error occurred.");
@@ -520,4 +520,4 @@ app.get("/test", function (req, res) {
 
 app.listen(process.env.PORT || 3000, function () {
   console.log("Server started on port 3000");
-});
+}); 
