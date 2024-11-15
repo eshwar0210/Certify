@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>No Address</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" type="text/css" href="vendor/bootstrap/css/bootstrap.min.css" />
+    <style>
+      body {
+        background-color: #f8f9fa; /* Light gray background */
+        color: #343a40; /* Dark text */
+        font-family: "Arial", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh; /* Full viewport height */
+        margin: 0;
+      }
+      .container {
+        max-width: 600px;
+        padding: 30px;
+        text-align: center; /* Center align text */
+        background: #ffffff; /* White card background */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+        border-radius: 10px; /* Smooth rounded edges */
+      }
+      .btn {
+        background-color: #007bff; /* Primary blue */
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        font-size: 16px;
+        text-decoration: none;
+      }
+      .btn:hover {
+        background-color: #0056b3; /* Darker blue */
+      }
+      h2 {
+        font-size: 28px;
+        font-weight: bold;
+        color: #495057; /* Subtle gray */
+        margin-bottom: 20px;
+      }
+      p.lead {
+        font-size: 18px;
+        color: #6c757d; /* Muted text */
+        margin-bottom: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>Hello, <%= name %></h2>
+      <p class="lead">
+        No blockchain account address has been created for you as of now.
+      </p>
+      <p class="lead">
+        Please contact your institute for further assistance.
+      </p>
+      <a href="/" class="btn mt-3">Go Back</a>
+    </div>
+  </body>
+</html>

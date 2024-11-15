@@ -8,6 +8,10 @@ const express = require("express");
 const bodyParser = require("body-parser");
 require('dotenv').config();
 
+const mongoose = require("mongoose");
+const bcrypt = require("bcrypt");
+
+
 const app = express();
 
 app.set('view engine', 'ejs');
@@ -22,6 +26,20 @@ const contractABI = require('./build/contracts/cert.json').abi;
 const coa = '0x1AdccfF126449350606433CeF739bA3bEC0f94C6';
 var contract = new web3.eth.Contract(contractABI, coa);
 
+const connectDB = async () => {
+  try {
+    const mongoURI = process.env.MONGO_URI; // Replace with your URI
+    await mongoose.connect(mongoURI);
+    console.log("Connected to MongoDB successfully");
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error.message);
+    process.exit(1); // Exit process with failure
+  }
+};
+
+
+// Call connectDB function
+connectDB();
 
 // See list of available contract methods
 
@@ -29,6 +47,10 @@ var contract = new web3.eth.Contract(contractABI, coa);
 
 let adminad = "0";
 let institutead = "0";
+
+const Institute = require("./models/Institute");
+const Student = require('./models/Student');
+
 
 app.get("/", function (req, res) {
   res.render("home");
@@ -83,6 +105,10 @@ app.get("/adminlogin", function (req, res) {
   res.render("adminlogin");
 });
 
+app.get('/studentsignup', (req, res) => {
+  res.render('studentsignup');  // Render the sign-up page
+});
+
 app.get("/admin/:id", function (req, res) {
   var id = req.params.id;
   web3.eth.getAccounts().then(function (result) {
@@ -102,58 +128,97 @@ app.post("/adminlogin", function (req, res) {
 app.get("/addinstitute", function (req, res) {
   res.render("addinstitute", { account: "NULL" });
 });
-app.post("/addinstitute", function (req, res) {
-  // See the body of request
-  // console.log(req.body);
 
-  // Ensure courses is an array
+
+
+app.post("/addinstitute", function (req, res) {
   let courses = [];
-  if (typeof req.body.courses === 'string') {
-    courses = req.body.courses.split(',').map(course => course.trim());
+  if (typeof req.body.courses === "string") {
+    courses = req.body.courses.split(",").map((course) => course.trim());
   } else if (Array.isArray(req.body.courses)) {
-    courses = req.body.courses; // Already an array, no changes needed
+    courses = req.body.courses;
   }
 
-  // Create a new account with a passphrase
-  const passphrase = process.env.PASSPHRASE;  // Ensure this is defined in your .env file
+  const passphrase = process.env.PASSPHRASE; // Ensure this is defined in your .env file
 
-  web3.eth.personal.newAccount(passphrase).then((instituteadrress) => {
-    // console.log("institute :", instituteadrress);
+  web3.eth.personal
+    .newAccount(passphrase)
+    .then((instituteAddress) => {
+      web3.eth.getAccounts().then((accounts) => {
+        const senderAccount = accounts[0];
 
-    // Get all accounts and set up transaction
-    web3.eth.getAccounts().then(function (result) {
-      const senderAccount = result[0];
-      const hash = result[result.length - 1];
-      // console.log("Institute account hash:", hash);
+        web3.eth.getGasPrice().then((gasPrice) => {
+          // Call the blockchain contract method
+          contract.methods
+            .addInstitute(
+              instituteAddress,
+              req.body.name,
+              req.body.acr,
+              req.body.webl,
+              courses
+            )
+            .send({
+              from: senderAccount,
+              gas: 6721975,
+              maxFeePerGas: gasPrice,
+            })
+            .then(() => {
+              // Hash the password
+              bcrypt.hash(req.body.password, 10, (err, hashedPassword) => {
+                if (err) {
+                  console.error("Failed to hash password:", err);
+                  return res.status(500).send("Error hashing password.");
+                }
 
-      // Dynamically fetch gas price and send transaction
-      web3.eth.getGasPrice().then((gasPrice) => {
-        contract.methods.addInstitute(hash, req.body.name, req.body.acr, req.body.webl, courses)  // Pass array here
-          .send({
-            from: senderAccount,
-            gas: 6721975,
-            maxFeePerGas: gasPrice
-          })
-          .then(() => {
-            res.render("addinstitute", { account: hash });
-          })
-          .catch(err => {
-            console.error("An error occurred:", err);
-            res.status(500).send("An error occurred while adding the institute.");
-          });
-      }).catch(gasErr => {
-        console.error("Failed to fetch gas price:", gasErr);
-        res.status(500).send("Failed to fetch gas price.");
+                // Save institute details in MongoDB
+                const newInstitute = new Institute({
+                  email: req.body.email,
+                  password: hashedPassword, // Save the hashed password
+                  accountAddress: instituteAddress,
+                  name: req.body.name,
+                  acronym: req.body.acr,
+                  website: req.body.webl,
+                  courses: courses,
+                });
+
+                newInstitute
+                  .save()
+                  .then(() => {
+                    // Render the 'viewinstitute' page with the institute address
+                    res.status(201).render("viewaddress", {
+                      address: instituteAddress,
+                    });
+                  })
+                  .catch((dbErr) => {
+                    console.error(
+                      "Failed to save institute in MongoDB:",
+                      dbErr
+                    );
+                    res
+                      .status(500)
+                      .send("Failed to save institute in MongoDB.");
+                  });
+              });
+            })
+            .catch((contractErr) => {
+              console.error(
+                "An error occurred while interacting with the contract:",
+                contractErr
+              );
+              res
+                .status(500)
+                .send("Failed to add the institute to the blockchain.");
+            });
+        });
       });
-    }).catch(accountErr => {
-      console.error("Failed to fetch accounts:", accountErr);
-      res.status(500).send("Failed to fetch accounts.");
+    })
+    .catch((newAccountErr) => {
+      console.error("Failed to create new Ethereum account:", newAccountErr);
+      res.status(500).send("Failed to create new Ethereum account.");
     });
-  }).catch(newAccountErr => {
-    console.error("Failed to create new account:", newAccountErr);
-    res.status(500).send("Failed to create new account.");
-  });
 });
+
+
 
 app.get("/viewinstitute", function (req, res) {
   contract.methods.viewAllInstitutes().call(function (err, resu) {
@@ -186,20 +251,50 @@ app.get("/institutelogin", function (req, res) {
   res.render("institutelogin");
 });
 
-app.get("/institute/:id", function (req, res) {
-  var id = req.params.id;
-  institutead = id;
-  console.log(institutead);
-  res.render("institute", { id: id });
-});
-
+// Route to handle the login form submission (email and password)
 app.post("/institutelogin", function (req, res) {
-  return res.redirect("/institute/" + req.body.username);
+  const { email, password } = req.body; // Get email and password from the form
+
+  // Find the institute by email
+  Institute.findOne({ email: email })
+    .then((institute) => {
+      if (!institute) {
+        return res.status(400).send("Institute not found.");
+      }
+
+      // Compare the entered password with the stored hashed password
+      bcrypt.compare(password, institute.password, (err, isMatch) => {
+        if (err) {
+          return res.status(500).send("Error during password comparison.");
+        }
+
+        if (!isMatch) {
+          return res.status(400).send("Invalid password.");
+        }
+
+        // If the password is correct, get the account address
+        const accountAddress = institute.accountAddress;
+
+        // Redirect to the institute page with the account address
+        res.redirect(`/institute/${accountAddress}`);
+      });
+    })
+    .catch((err) => {
+      console.error("Error fetching institute:", err);
+      res.status(500).send("Internal server error.");
+    });
 });
 
-app.listen(process.env.PORT || 3000, function () {
-  console.log("Server started on port 3000");
+// Route to render the institute dashboard page after login
+app.get("/institute/:id", function (req, res) {
+  const accountAddress = req.params.id;
+  console.log(accountAddress);
+  // Render the institute page with the account address and other details
+  res.render("institute", { "id"  :  accountAddress });
+   
 });
+
+
 
 app.get("/updateinstitute", function (req, res) {
   res.render("updateinstitute");
@@ -222,98 +317,164 @@ app.post("/updateinstitute", function (req, res) {
 });
 
 app.get("/addstudent", function (req, res) {
-  res.render("addstudent", { account: "NULL" });
+  console.log("IN add student" , req.query.instituteAddress)
+  res.render("addstudent", { id : req.query.instituteAddress });
 });
 
-app.post("/addstudent", function (req, res) {
+app.post("/addstudent", async function (req, res) {
   const name = req.body.name;
-  // console.log(name);
-  const passphrase = process.env.PASSPHRASE;  // Ensure this is set in your .env file
+  const email = req.body.email;
+  console.log("Received request:", req.body);
+  const add = req.body.instituteAddress;
+  try {
+    // Find the student by email
+    const student = await Student.findOne({ email: email });
 
-  // Create a new account with the passphrase
-  web3.eth.personal.newAccount(passphrase).then((studentAccount) => {
-    console.log("Student account:", studentAccount);
+    if (!student) {
+      // If student doesn't exist in the database, return an error
+      return res.status(404).send("Student not found.");
+    }
 
-    // Get all accounts and prepare transaction
-    web3.eth.getAccounts().then(function (result) {
-      const senderAccount = result[0];
-      const studentAccountHash = result[result.length - 1];
+    console.log("Found student, using existing account:", student.accountAddress);
 
-      console.log("Student account hash:", studentAccountHash);
+    // If student exists, use the existing account address
+    const studentAccountHash = student.accountAddress;
 
-      // Dynamically fetch gas price and send transaction
-      web3.eth.getGasPrice().then((gasPrice) => {
-        contract.methods.addStudent(studentAccountHash, name)
-          .send({
-            from: senderAccount,
-            gas: 6721975,
-            maxFeePerGas: gasPrice
-          })
-          .then(() => {
-            res.render("addstudent", { account: studentAccountHash });
-          })
-          .catch(err => {
-            console.error("An error occurred:", err);
-            res.status(500).send("An error occurred while adding the student.");
-          });
-      }).catch(gasErr => {
-        console.error("Failed to fetch gas price:", gasErr);
-        res.status(500).send("Failed to fetch gas price.");
-      });
-    }).catch(accountErr => {
-      console.error("Failed to fetch accounts:", accountErr);
-      res.status(500).send("Failed to fetch accounts.");
-    });
-  }).catch(newAccountErr => {
-    console.error("Failed to create new account:", newAccountErr);
-    res.status(500).send("Failed to create new account.");
-  });
+    // If account does not exist, create a new one
+    if (!studentAccountHash) {
+      // Create a new account if not present in the database
+      const newAccount = await web3.eth.personal.newAccount(process.env.PASSPHRASE);
+      console.log("Created new student account:", newAccount);
+      
+      // Save the new account address in the database
+      student.accountAddress = newAccount;
+      await student.save();
+
+      // Proceed with the transaction using the new account
+      sendTransaction(newAccount, name, add, res);
+    } else {
+      // Proceed with the transaction using the existing account
+      sendTransaction(studentAccountHash, name, add, res);
+    }
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).send("An error occurred.");
+  }
 });
+
+async function sendTransaction(studentAccountHash, name, add, res) {
+  try {
+    // Unlock the institute account before sending the transaction
+    const passphrase = process.env.PASSPHRASE;
+    
+    // Unlock the institute account using the passphrase
+    await web3.eth.personal.unlockAccount(add, passphrase, 600); // Unlock for 600 seconds (10 minutes)
+
+    // Dynamically fetch gas price and send transaction
+    const gasPrice = await web3.eth.getGasPrice();
+    
+    await contract.methods.addStudent(studentAccountHash, name)
+      .send({
+        from: add,  // Use the instituteAddress as the sender
+        gas: 6721975,
+        maxFeePerGas: gasPrice
+      });
+
+    res.render("institute", { id: add });
+  } catch (err) {
+    console.error("An error occurred:", err);
+    res.status(500).send("An error occurred while adding the student.");
+  }
+}
+
+
+
+app.post('/studentsignup', async (req, res) => {
+  const { name, email, rollNumber, password } = req.body;
+
+  try {
+    // Check if the email is already registered
+    const existingStudent = await Student.findOne({ email });
+    if (existingStudent) {
+      return res.status(400).send('Email is already registered');
+    }
+
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new Student document
+    const newStudent = new Student({
+      name,
+      email,
+      rollNumber,
+      password: hashedPassword,
+    });
+
+    // Save the student to the database
+    await newStudent.save();
+
+    // Redirect to the login page
+    res.redirect('/studentlogin');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error signing up. Please try again.');
+  }
+});
+
 
 
 
 app.get("/gencertificate", function (req, res) {
-  res.render("gencertificate", { account: "NULL" });
-})
-// console.log("Current institute address " , institutead);
+  console.log("Institute Address:", req.query.instituteAddress);  // Debugging log
+  res.render("gencertificate", { id: req.query.instituteAddress });
+});
 
-app.post("/gencertificate", function (req, res) {
+
+// console.log("Current institute address " , institutead);
+app.post("/gencertificate", async function (req, res) {
   const passphrase = process.env.PASSPHRASE; // Replace with your chosen passphrase
 
-  web3.eth.personal.newAccount(passphrase)
-    .then(function (account) {
-      console.log("Generated account:", account);
+  console.log(req.body);
+  const { email, course, dur } = req.body;
+  const institutead = req.body.instituteAddress;
 
-      web3.eth.getAccounts().then(function (accounts) {
-        const adminAccount = accounts[0]; // Default account to send from
+  try {
+    // Find the student by email
+    const student = await Student.findOne({ email: email });
 
-        web3.eth.getGasPrice().then(function (gasPrice) {
-          const adjustedGasPrice = web3.utils.toBN(gasPrice).add(web3.utils.toBN(1000000000)); // Adding buffer to base fee
+    if (!student) {
+      return res.status(404).send("Student not found.");
+    }
 
-          contract.methods.issueCertificate(account, institutead, req.body.studad, req.body.course, req.body.dur)
-            .send({ from: adminAccount, gasPrice: adjustedGasPrice, gas: 6721975 })
-            .then(function (receipt) {
-              console.log("Transaction successful:", receipt);
-              res.render("gencertificate", { account: account });
-            })
-            .catch(function (err) {
-              console.error("Transaction error:", err);
-              res.status(500).send("Transaction failed.");
-            });
-        }).catch(function (err) {
-          console.error("Failed to fetch gas price:", err);
-          res.status(500).send("Could not fetch gas price.");
-        });
-      }).catch(function (err) {
-        console.error("Failed to get accounts:", err);
-        res.status(500).send("Could not fetch accounts.");
-      });
-    })
-    .catch(function (err) {
-      console.error("Failed to create new account:", err);
-      res.status(500).send("Account creation failed.");
-    });
+    const studentAddress = student.accountAddress;
+
+    // Create a new account
+    const account = await web3.eth.personal.newAccount(passphrase);
+    console.log("Generated account:", account);
+
+    // Get the admin account
+    const accounts = await web3.eth.getAccounts();
+    const adminAccount = accounts[0]; // Default account to send from
+
+    // Get the gas price
+    const gasPrice = await web3.eth.getGasPrice();
+    const adjustedGasPrice = web3.utils
+      .toBN(gasPrice)
+      .add(web3.utils.toBN(1000000000)); // Adding buffer to base fee
+
+    // Issue the certificate
+    const receipt = await contract.methods
+      .issueCertificate(account, institutead, studentAddress, course, dur)
+      .send({ from: adminAccount, gasPrice: adjustedGasPrice, gas: 6721975 });
+
+    console.log("Transaction successful:", receipt);
+    res.render("institute", { id : institutead });
+  } catch (err) {
+    console.error("Error:", err.message);
+    res.status(500).send("An error occurred.");
+  }
 });
+
 
 
 
@@ -389,11 +550,44 @@ app.get("/student/:id", function (req, res) {
 });
 
 
-app.post("/studentlogin", function (req, res) {
-  return res.redirect("/student/" + req.body.address);
+
+app.post('/studentlogin', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // Find the student by email
+    const student = await Student.findOne({ email });
+
+    if (!student) {
+      return res.status(404).send('No account found with that email.');
+    }
+
+    // Verify the password
+    const isPasswordValid = await bcrypt.compare(password, student.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).send('Invalid email or password.');
+    }
+
+    // Check if account address exists
+    if (student.accountAddress) {
+      return res.redirect(`/student/${student.accountAddress}`);
+    } else {
+      // Render a view showing no address message
+      return res.render('noAddress', { name: student.name });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('An error occurred. Please try again later.');
+  }
 });
 
 
 app.get("/test", function (req, res) {
   res.render("student");
 })
+
+
+app.listen(process.env.PORT || 3000, function () {
+  console.log("Server started on port 3000");
+});

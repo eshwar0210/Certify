@@ -113,15 +113,14 @@
           <!-- <form class="login100-form validate-form"> -->
             
             
-            <div
-              class="container-login100-form-btn"
-              style="margin: 4%;   border-top-right-radius: 100px"
-            >
-              <button class="login100-form-btn"><a href = "/addstudent" style="color: white;">Add Student</a></button></a>
+            <div class="container-login100-form-btn" style="margin: 4%; border-top-right-radius: 100px">
+              <a href="/addstudent?instituteAddress=<%= id %>" class="login100-form-btn" style="color: white;">Add Student</a>
             </div>
+            
             <div class="container-login100-form-btn" style="margin: 4%">
-              <button class="login100-form-btn"><a href = "/gencertificate" style="color: white;">Generate Certificate</a></button>
+              <a href="/gencertificate?instituteAddress=<%= id %>" class="login100-form-btn" style="color: white;">Generate Certificate</a>
             </div>
+            
             <!-- <div class="container-login100-form-btn" style="margin: 4%">
               <button class="login100-form-btn"><a href = "/remcertificate" style="color: white;">Remove Certificate</a></button>
             </div> -->
