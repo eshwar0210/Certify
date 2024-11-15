@@ -24485,12 +24485,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0xb25cbe209387EFA6769d0cFbe187f12D576D7468",
-      "transactionHash": "0x795ecdeaf9ace3bb8b26f5512b13e8525b369ce4203b90d1020c2a8a77a7ee3d"
+      "address": "0x1DBbDaf221714B3F9c73ccDc559cAb722444fC1D",
+      "transactionHash": "0xb8d29a99c2e042495db65e7773057bdbbff1b5fc0ad227169aa9157eb1460669"
     }
   },
   "schemaVersion": "3.4.16",
-  "updatedAt": "2024-11-15T17:26:20.602Z",
+  "updatedAt": "2024-11-15T19:44:01.181Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",

@@ -1,6 +1,7 @@
 // import Tx from ethereumjs-tx
 // import Web3 from web3
 // import Accounts from web3-eth-accounts
+
 var Tx = require('ethereumjs-tx')
 const Web3 = require('web3')
 var Accounts = require('web3-eth-accounts');
@@ -23,7 +24,7 @@ const web3 = new Web3('HTTP://127.0.0.1:7545');
 var accounts = new Accounts('HTTP://127.0.0.1:7545');
 const contractABI = require('./build/contracts/cert.json').abi;
 
-const coa = '0x1AdccfF126449350606433CeF739bA3bEC0f94C6';
+const coa = '0x1DBbDaf221714B3F9c73ccDc559cAb722444fC1D';
 var contract = new web3.eth.Contract(contractABI, coa);
 
 const connectDB = async () => {
@@ -41,9 +42,6 @@ const connectDB = async () => {
 // Call connectDB function
 connectDB();
 
-// See list of available contract methods
-
-// console.log(contract.methods);
 
 let adminad = "0";
 let institutead = "0";
@@ -54,7 +52,7 @@ const Student = require('./models/Student');
 
 app.get("/", function (req, res) {
   res.render("home");
-}); 
+});
 
 
 app.get("/viewcertificate/:add", async function (req, res) {
@@ -84,8 +82,8 @@ app.get("/viewcertificate/:add", async function (req, res) {
       name: studentName,          // Student's name
       course: result['course'],   // Course name
       duration: result['duration'], // Duration of the course
-      institute: instituteName , // Institute's name
-      address : address
+      institute: instituteName, // Institute's name
+      address: address
     });
 
   } catch (err) {
@@ -116,7 +114,7 @@ app.get("/admin/:id", function (req, res) {
       adminad = id;
       return res.render("admin", { id: id });
     }
-    res.render("errorPage", {error : "Admin credentials invalid"})
+    res.render("errorPage", { error: "Admin credentials invalid" })
   });
 
 });
@@ -290,8 +288,8 @@ app.get("/institute/:id", function (req, res) {
   const accountAddress = req.params.id;
   console.log(accountAddress);
   // Render the institute page with the account address and other details
-  res.render("institute", { "id"  :  accountAddress });
-   
+  res.render("institute", { "id": accountAddress });
+
 });
 
 
@@ -316,9 +314,10 @@ app.post("/updateinstitute", function (req, res) {
   res.render("institute", { id: institutead });
 });
 
+
 app.get("/addstudent", function (req, res) {
-  console.log("IN add student" , req.query.instituteAddress)
-  res.render("addstudent", { id : req.query.instituteAddress });
+  console.log("IN add student", req.query.instituteAddress)
+  res.render("addstudent", { id: req.query.instituteAddress });
 });
 
 app.post("/addstudent", async function (req, res) {
@@ -345,7 +344,7 @@ app.post("/addstudent", async function (req, res) {
       // Create a new account if not present in the database
       const newAccount = await web3.eth.personal.newAccount(process.env.PASSPHRASE);
       console.log("Created new student account:", newAccount);
-      
+
       // Save the new account address in the database
       student.accountAddress = newAccount;
       await student.save();
@@ -364,18 +363,15 @@ app.post("/addstudent", async function (req, res) {
 
 async function sendTransaction(studentAccountHash, name, add, res) {
   try {
-    // Unlock the institute account before sending the transaction
-    const passphrase = process.env.PASSPHRASE;
-    
-    // Unlock the institute account using the passphrase
-    await web3.eth.personal.unlockAccount(add, passphrase, 600); // Unlock for 600 seconds (10 minutes)
+    // Get the sender account (use the first account from Ganache)
+    const result = await web3.eth.getAccounts();
+    const senderAccount = result[0];
 
     // Dynamically fetch gas price and send transaction
     const gasPrice = await web3.eth.getGasPrice();
-    
     await contract.methods.addStudent(studentAccountHash, name)
       .send({
-        from: add,  // Use the instituteAddress as the sender
+        from: senderAccount,
         gas: 6721975,
         maxFeePerGas: gasPrice
       });
@@ -386,8 +382,6 @@ async function sendTransaction(studentAccountHash, name, add, res) {
     res.status(500).send("An error occurred while adding the student.");
   }
 }
-
-
 
 app.post('/studentsignup', async (req, res) => {
   const { name, email, rollNumber, password } = req.body;
@@ -430,15 +424,17 @@ app.get("/gencertificate", function (req, res) {
 });
 
 
-// console.log("Current institute address " , institutead);
 app.post("/gencertificate", async function (req, res) {
   const passphrase = process.env.PASSPHRASE; // Replace with your chosen passphrase
 
   console.log(req.body);
   const { email, course, dur } = req.body;
   const institutead = req.body.instituteAddress;
-
+  console.log(req.body);
   try {
+    // Clean up the 'dur' value by trimming spaces and checking if it's a valid number
+    
+
     // Find the student by email
     const student = await Student.findOne({ email: email });
 
@@ -456,27 +452,22 @@ app.post("/gencertificate", async function (req, res) {
     const accounts = await web3.eth.getAccounts();
     const adminAccount = accounts[0]; // Default account to send from
 
-    // Get the gas price
+    // Get the gas price and add buffer
     const gasPrice = await web3.eth.getGasPrice();
-    const adjustedGasPrice = web3.utils
-      .toBN(gasPrice)
-      .add(web3.utils.toBN(1000000000)); // Adding buffer to base fee
+    const adjustedGasPrice = web3.utils.toBN(gasPrice).add(web3.utils.toBN("1000000000")); // Adding buffer to base fee
 
     // Issue the certificate
     const receipt = await contract.methods
-      .issueCertificate(account, institutead, studentAddress, course, dur)
+      .issueCertificate(account, institutead, studentAddress , course, dur)
       .send({ from: adminAccount, gasPrice: adjustedGasPrice, gas: 6721975 });
 
     console.log("Transaction successful:", receipt);
-    res.render("institute", { id : institutead });
+    res.render("institute", { id: institutead });
   } catch (err) {
     console.error("Error:", err.message);
     res.status(500).send("An error occurred.");
   }
 });
-
-
-
 
 
 app.get("/remcertificate", function (req, res) {
@@ -500,7 +491,7 @@ app.get("/studentlogin", function (req, res) {
 
 app.get("/student/:id", function (req, res) {
   var id = req.params.id;
-
+  console.log("here id is ", id);
   // Assuming the contract is already initialized and set up with web3.js
   contract.methods.getStudentName(id).call()
     .then(function (studentName) {
@@ -582,6 +573,12 @@ app.post('/studentlogin', async (req, res) => {
   }
 });
 
+
+app.get('/logout', (req, res) => {
+
+  res.redirect('/');
+
+});
 
 app.get("/test", function (req, res) {
   res.render("student");
