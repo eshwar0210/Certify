@@ -5,10 +5,19 @@
 var Tx = require('ethereumjs-tx')
 const Web3 = require('web3')
 var Accounts = require('web3-eth-accounts');
+
+// express lib
 const express = require("express");
+
+// body json parser lib
+
 const bodyParser = require("body-parser");
+
+// dotenv lib 
 require('dotenv').config();
 
+
+// mongoose for mongo connection and bcrypt for encrypting password\
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 
@@ -24,12 +33,13 @@ const web3 = new Web3('HTTP://127.0.0.1:7545');
 var accounts = new Accounts('HTTP://127.0.0.1:7545');
 const contractABI = require('./build/contracts/cert.json').abi;
 
+// change this cert deployed address after running truffle compile
 const coa = '0x1DBbDaf221714B3F9c73ccDc559cAb722444fC1D';
 var contract = new web3.eth.Contract(contractABI, coa);
 
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGO_URI; // Replace with your URI
+    const mongoURI = process.env.MONGO_URI;
     await mongoose.connect(mongoURI);
     console.log("Connected to MongoDB successfully");
   } catch (error) {
@@ -46,6 +56,7 @@ connectDB();
 let adminad = "0";
 let institutead = "0";
 
+// models
 const Institute = require("./models/Institute");
 const Student = require('./models/Student');
 
@@ -99,29 +110,13 @@ app.post("/", function (req, res) {
   res.redirect("/viewcertificate/" + add);
 })
 
-app.get("/adminlogin", function (req, res) {
-  res.render("adminlogin");
-});
+
 
 app.get('/studentsignup', (req, res) => {
   res.render('studentsignup');  // Render the sign-up page
 });
 
-app.get("/admin/:id", function (req, res) {
-  var id = req.params.id;
-  web3.eth.getAccounts().then(function (result) {
-    if (id == result[0]) {
-      adminad = id;
-      return res.render("admin", { id: id });
-    }
-    res.render("errorPage", { error: "Admin credentials invalid" })
-  });
 
-});
-
-app.post("/adminlogin", function (req, res) {
-  return res.redirect("/admin/" + req.body.address);
-});
 
 app.get("/addinstitute", function (req, res) {
   res.render("addinstitute", { account: "NULL" });
@@ -217,34 +212,6 @@ app.post("/addinstitute", function (req, res) {
 });
 
 
-
-app.get("/viewinstitute", function (req, res) {
-  contract.methods.viewAllInstitutes().call(function (err, resu) {
-    if (err)
-      console.log(err);
-    // console.log(resu);
-    res.render("viewinstitute", { inst: resu });
-  });
-});
-
-app.get("/removeinstitute", function (req, res) {
-  res.render("removeinstitute");
-});
-
-app.post("/removeinstitute", function (req, res) {
-  const id = req.body.username;
-  web3.eth.getAccounts().then(function (result) {
-    contract.methods.deleteInstitute(id)
-      .send({ from: result[0], gas: 6721975 }) // Removed gasPrice here
-      .then(() => res.redirect("/admin/" + adminad))
-      .catch(err => {
-        console.error("Transaction Error:", err);
-        res.status(500).send("Error processing transaction");
-      });
-  });
-});
-
-
 app.get("/institutelogin", function (req, res) {
   res.render("institutelogin");
 });
@@ -293,26 +260,6 @@ app.get("/institute/:id", function (req, res) {
 });
 
 
-
-app.get("/updateinstitute", function (req, res) {
-  res.render("updateinstitute");
-})
-
-app.post("/updateinstitute", function (req, res) {
-  // console.log(req.body);
-  let courses = [];
-  if (typeof req.body.courses === 'string') {
-    courses = req.body.courses.split(',').map(course => course.trim());
-  } else if (Array.isArray(req.body.courses)) {
-    courses = req.body.courses; // Already an array, no changes needed
-  }
-  contract.methods.updateInstitute(institutead, req.body.name, req.body.acr, req.body.webl, courses)
-    .send({ from: institutead, gasPrice: 1, gas: 6721975 }, function (err) {
-      if (err)
-        console.log(err);
-    });
-  res.render("institute", { id: institutead });
-});
 
 
 app.get("/addstudent", function (req, res) {
@@ -469,20 +416,6 @@ app.post("/gencertificate", async function (req, res) {
   }
 });
 
-
-app.get("/remcertificate", function (req, res) {
-  res.render("remcertificate");
-});
-
-app.post("/remcertificate", function (req, res) {
-  var add = req.body.addr;
-
-  contract.methods.revCertificate(add).call(function (err, resu) {
-    if (err)
-      console.log(err);
-    return res.redirect("/institute/" + instad);
-  });
-});
 
 
 app.get("/studentlogin", function (req, res) {
