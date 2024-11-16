@@ -50,46 +50,6 @@ contract Cert {
     }   
 
 
-    function updateInstitute(
-        address instad,
-        string memory _name,
-        string memory _acr,
-        string memory _link,
-        string[] memory _course
-    ) public {
-        require(institutes[instad].del == false, "Institute has been deleted");
-
-        institutes[instad].name = _name;
-        institutes[instad].acr = _acr;
-        institutes[instad].link = _link;
-
-        // Reset the course array
-        delete institutes[instad].course;
-        for (uint i = 0; i < _course.length; i++) {
-            institutes[instad].course.push(_course[i]);
-        }
-    }
-
-    function deleteInstitute(address instad) public {
-        require(msg.sender == admin, "Only admin can delete institutes");
-
-        institutes[instad].del = true;
-        instcnt--;
-    }
-
-    function viewAllInstitutes() public view returns (Institute[] memory) {
-        Institute[] memory ans = new Institute[](instcnt);
-        uint j = 0;
-
-        for (uint i = 0; i < InstAddressList.length; i++) {
-            if (!institutes[InstAddressList[i]].del) {
-                ans[j] = institutes[InstAddressList[i]];
-                j++;
-            }
-        }
-        return ans;
-    }
-
     mapping(address => string) public students;
     address[] public StudAddressList;
     uint public studcnt;
