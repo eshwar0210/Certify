@@ -10,10 +10,9 @@ A Digital Certificate using blockchain technology can address this problem.
 
 ## Features
 * Admin
-  * Manage Institutes (Add / Remove)
+  * Add Institutes
 * Universities
   * Issue academic certificates.
-  * View academic certificates issued.
 * Students
   * Receive academic certificates from universities.
   * View received academic certificates.
